@@ -14,7 +14,7 @@ def mouse_click(event, x, y, flags, param): #event devuelve 1 al hacer LBUTTON_D
         print(coord) 
 
     if event == cv2.EVENT_RBUTTONDOWN:
-        azul = frame[y,x,0]
+        azul = frame[y,x,0]     #row,column,color--->frame
         verde = frame[y,x,1]
         rojo = frame[y,x,2]
         img[:]=[azul,verde,rojo]
