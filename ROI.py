@@ -16,8 +16,8 @@ while(True):
     cv2.imshow('roi_gris',ROI_gris)
     ROI_color = cv2.cvtColor(ROI_gris,cv2.COLOR_GRAY2BGR) #es necesaria esta conversion(no convierte, 
     cv2.imshow('roi_color',ROI_color)                     #colores eliminados) para insertarla en el frame 
-    frame[50:190,140:300] = ROI_color
-    cv2.imshow('preview2',frame)
+    frame[50:190,140:300] = ROI_color                     #al hacerlo se reformatea a una tupla de 3 para el color 
+    cv2.imshow('preview2',frame)                          #aunque este se ha perdido
     if cv2.waitKey(1) & 0xFF == ord('q'):    
         break
     
