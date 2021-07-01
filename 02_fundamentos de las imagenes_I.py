@@ -11,8 +11,14 @@ while(True):
     #print(imagen_reducida.shape)
 
     ceros = np.zeros((480,320,3),dtype=np.uint8)
-    cv2.imshow('ceros', ceros)
+    
     print(ceros.shape)
+
+    ceros[0:50,0:100] = 255
+    cv2.imshow('ceros', ceros)
+
+    
+
     if cv2.waitKey(1) & 0xFF == ord('q'):    
         break
 
