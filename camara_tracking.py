@@ -2,6 +2,9 @@ import cv2
 import numpy as np 
 
 cam=cv2.VideoCapture(0)
+width = cam.(cv2.CAM_PROP_FRAME_WIDTH)
+heigth = cam.(cv2.CAM_PROP_FRAME_HEIGTH)
+
 cv2.namedWindow('tracks')
 
 def cb(x):
@@ -52,7 +55,26 @@ while(True):
             x,y,w,h=cv2.boundingRect(cnt)
             cv2.rectangle(frame,(x,y),(x+w,y+h),(255,0,0),3)
 
-            
+	    centro_rect_x = x + w/2
+	    centro_rect_y = y + h/2
+
+	    errorX = centro_rect_x - width/2   
+	    errorY = centro_rect_x - width/2   
+
+	    if abs(errorX) > 25:
+	        pan = pan - errorX/75	
+	    if abs(errorY) > 25:
+		tilt = tilt - errorY/75
+
+	    if pan >179:
+		pan = 180
+	    if pan <1:
+		pan = 0 
+	    if tilt >179:
+		tilt = 180
+	    if tilt <1:
+		tilt = 0
+
     cv2.imshow('bgr',frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):    
