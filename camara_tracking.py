@@ -1,84 +1,109 @@
 import cv2
-import numpy as np 
+print(cv2.__version__)
+import numpy as np
+from adafruit_servokit import ServoKit
+kit=ServoKit(channels=16)
 
-cam=cv2.VideoCapture(0)
-width = cam.(cv2.CAM_PROP_FRAME_WIDTH)
-heigth = cam.(cv2.CAM_PROP_FRAME_HEIGTH)
+pan=0
+tilt=30
+kit.servo[0].angle=pan
+kit.servo[1].angle=tilt
 
-cv2.namedWindow('tracks')
-
-def cb(x):
+def nothing(x):
     pass
 
-cv2.createTrackbar('hueLow','tracks',99,179,cb)
-cv2.createTrackbar('hueHigh','tracks',123,179,cb)
-cv2.createTrackbar('satLow','tracks',155,255,cb)
-cv2.createTrackbar('satHigh','tracks',248,255,cb)
-cv2.createTrackbar('valLow','tracks',97,255,cb)
-cv2.createTrackbar('valHigh','tracks',223,255,cb)
+cv2.namedWindow('Trackbars')
+cv2.moveWindow('Trackbars',1320,0)
 
-while(True):     
-    ret, frame = cam.read()      
-    #cv2.imshow('bgr',frame)  
-    #print(frame.shape)
+cv2.createTrackbar('hueLower', 'Trackbars',96,179,nothing)
+cv2.createTrackbar('hueUpper', 'Trackbars',120,179,nothing)
 
-    imagen_hsv = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-    #cv2.imshow('hsv',imagen_hsv)
-    #print(imagen_hsv.shape) 
+cv2.createTrackbar('hue2Lower', 'Trackbars',50,179,nothing)
+cv2.createTrackbar('hue2Upper', 'Trackbars',0,179,nothing)
 
-    hl = cv2.getTrackbarPos('hueLow','tracks')
-    hH = cv2.getTrackbarPos('hueHigh','tracks')
-    sl = cv2.getTrackbarPos('satLow','tracks')
-    sH = cv2.getTrackbarPos('satHigh','tracks')
-    vl = cv2.getTrackbarPos('valLow','tracks')
-    vH = cv2.getTrackbarPos('valHigh','tracks')
+cv2.createTrackbar('satLow', 'Trackbars',157,255,nothing)
+cv2.createTrackbar('satHigh', 'Trackbars',255,255,nothing)
+cv2.createTrackbar('valLow','Trackbars',100,255,nothing)
+cv2.createTrackbar('valHigh','Trackbars',255,255,nothing)
 
-    lb=np.array([hl,sl,vl])
-    ub=np.array([hH,sH,vH])
 
-    masked = cv2.inRange(imagen_hsv,lb,ub)
-    cv2.imshow('masked',masked)
-    #print(imagen_hsv.shape)
 
-    bit_and = cv2.bitwise_and(frame, frame, mask=masked)
-    cv2.imshow('bit_and',bit_and)
+#Or, if you have a WEB cam, uncomment the next line
+#(If it does not work, try setting to '1' instead of '0')
+cam=cv2.VideoCapture(0)
+width=cam.get(cv2.CAP_PROP_FRAME_WIDTH)
+height=cam.get(cv2.CAP_PROP_FRAME_HEIGHT)
+print('width:',width,'height:',height)
+while True:
+    ret, frame = cam.read()
+    #frame=cv2.imread('smarties.png')
 
-    #bit_not = cv2.bitwise_not(bit_and)
-    #print(bit_not.shape)
-    #cv2.imshow('bit_not',bit_not)
+    hsv=cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
 
-    contours,_= cv2.findContours(masked, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    print("Number of Contours found = " + str(len(contours)))
+    hueLow=cv2.getTrackbarPos('hueLower', 'Trackbars')
+    hueUp=cv2.getTrackbarPos('hueUpper', 'Trackbars')
+
+    hue2Low=cv2.getTrackbarPos('hue2Lower', 'Trackbars')
+    hue2Up=cv2.getTrackbarPos('hue2Upper', 'Trackbars')
+
+    Ls=cv2.getTrackbarPos('satLow', 'Trackbars')
+    Us=cv2.getTrackbarPos('satHigh', 'Trackbars')
+
+    Lv=cv2.getTrackbarPos('valLow', 'Trackbars')
+    Uv=cv2.getTrackbarPos('valHigh', 'Trackbars')
+
+    l_b=np.array([hueLow,Ls,Lv])
+    u_b=np.array([hueUp,Us,Uv])
+
+    l_b2=np.array([hue2Low,Ls,Lv])
+    u_b2=np.array([hue2Up,Us,Uv])
+
+    FGmask=cv2.inRange(hsv,l_b,u_b)
+    FGmask2=cv2.inRange(hsv,l_b2,u_b2)
+    FGmaskComp=cv2.add(FGmask,FGmask2)
+    cv2.imshow('FGmaskComp',FGmaskComp)
+    cv2.moveWindow('FGmaskComp',0,530)
+
+    contours,_=cv2.findContours(FGmaskComp,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+    contours=sorted(contours,key=lambda x:cv2.contourArea(x),reverse=True)
     for cnt in contours:
-        c_area = cv2.contourArea(cnt)
-        if c_area > 90:
-            x,y,w,h=cv2.boundingRect(cnt)
+        area=cv2.contourArea(cnt)
+        (x,y,w,h)=cv2.boundingRect(cnt)
+        if area>=50:
+            #cv2.drawContours(frame,[cnt],0,(255,0,0),3)
             cv2.rectangle(frame,(x,y),(x+w,y+h),(255,0,0),3)
+            objX=x+w/2
+            objY=y+h/2
+            errorPan=objX-width/2
+            errorTilt=objY-height/2
+            if abs(errorPan)>15:
+                pan=pan-errorPan/75
+            if abs(errorTilt)>15:
+                tilt=tilt+errorTilt/75
 
-	    centro_rect_x = x + w/2
-	    centro_rect_y = y + h/2
 
-	    errorX = centro_rect_x - width/2   
-	    errorY = centro_rect_x - width/2   
+            if pan>180:
+                pan=180
+                print("Pan Out of  Range")   
+            if pan<0:
+                pan=0
+                print("Pan Out of  Range") 
+            if tilt>180:
+                tilt=180
+                print("Tilt Out of  Range") 
+            if tilt<0:
+                tilt=0
+                print("Tilt Out of  Range")                 
 
-	    if abs(errorX) > 25:
-	        pan = pan - errorX/75	
-	    if abs(errorY) > 25:
-		tilt = tilt - errorY/75
+            kit.servo[0].angle=pan
+            kit.servo[1].angle=tilt 
+            break        
 
-	    if pan >179:
-		pan = 180
-	    if pan <1:
-		pan = 0 
-	    if tilt >179:
-		tilt = 180
-	    if tilt <1:
-		tilt = 0
-
-    cv2.imshow('bgr',frame)
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):    
-        break
+    cv2.imshow('nanoCam',frame)
+    cv2.moveWindow('nanoCam',0,0)
     
+
+    if cv2.waitKey(1)==ord('q'):
+        break
 cam.release()
 cv2.destroyAllWindows()
