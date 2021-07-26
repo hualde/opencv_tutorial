@@ -1,14 +1,12 @@
 import cv2 
 import numpy as np
 
-image = cv2.imread('img/alo.jpg')
+image = cv2.imread('img/logo_opencv.jpg')
 imagen_reducida = cv2.resize(image, (640, 480))
 while(True):    
     
-    cv2.imshow('Alonso en Alpine',image)
-    #print(image.shape)
-    #cv2.imshow('Alonso en Alpine_reducida',imagen_reducida)
-    #print(imagen_reducida.shape)
+    cv2.imshow('logo',image)
+
 
     ceros = np.zeros((480,320,3),dtype=np.uint8)
     
